@@ -2,14 +2,20 @@
 Serial Console Menu Library for Arduino
 
 ## Overview
-This library allows you to create menus on the Arduino Serial console
-and call a single function to display them, and call another function
-in the main loop to automatically monitor them and execute the callback
-function associated to the menu entry selected.
+This library allows you to define menus for the Arduino Serial console.
+Menus are very simple to build, by just declaring them in an array.
+A single show() function call displays them, and a single call to the
+run() function from loop() is enough to automatically monitor the menu
+and execute the callback functions associated to the menu entries.
 
 The menus are non-blocking, but only trigger when there is user input.
-This allows your programs to simultaneously go about the work you want
-them to do while responding to serial commands promptly.
+This means run() returns immediately if there's no activity, or just
+after calling the callback routine if there was input. This allows
+programs to simultaneously go about the work you want them to do while
+responding to serial commands promptly but with almost no overhead.
+
+Furthermore because of how the menu library is implemented, they consume
+very little memory.
 
 ## Benefits:
 
@@ -18,6 +24,12 @@ them to do while responding to serial commands promptly.
 * Easily support sub-menu hierarchies
 * Compact user code
 * Menu text can be stored in SRAM or Flash (data or program memory)
+
+## Memory overhead analysis:
+
+This analysis is for version 1.0 released Nov. 12 2019.
+
+
 
 ## Notes:
 
