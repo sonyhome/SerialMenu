@@ -35,25 +35,38 @@ entry definition. See the example.
 A lambda function syntax is written "[](){}" where the code goes inside {}.
 The other elements "[]()" are not used here.
 
+## Installation:
+
+Copy this package in your Arduino's "library" directory. For example on Mac
+this will be in "Documents/Arduino/libraries".
+
+To test load and run the example from the Files menu:
+File -> Examples -> SerialMenu -> Demo
+Open your Serial console window in the IDE from the Tools menu:
+Tools -> Serial Monitor
+
+You should see the demo menu, and interact with it.
+
 ## Usage example:
 
 Let's create two menus which call each other, with a varying number of menu
 entries, some of them stored in Flash (PROGMEM), and some in SRAM.
 
-    //// Forward declaration of other menus, needed before using them:
+```C++
+
+    // Forward declaration of menu2, because it is referenced before definition
     extern const SerialMenuEntry menu2[];
     extern const uint8_t menu2Size;
     
-    //// You can declare some menu strings separately (needed for FLASH)
+    // You can declare menu strings separately (a must for PROGMEM FLASH)
     const char menu1String1[] = "Y - residplay this menu (Text in SRAM)";
     const char menu1String2[] PROGMEM = "Z - second menu (Text in FLASH)";
     
-    //// Definition of menu1:
-    
-    //// Text is either embedded direct or a string name is referenced
-    //// Text in FLASH via PROGMEM is flagged as true
-    //// The menu entry's key tp press is specified (converts to lowercase)
-    //// followed by the lambda functions
+    // Definition of menu1:
+    // Text is either embedded directly or a string name can be referenced
+    // Text in FLASH via PROGMEM is flagged as true, else use false
+    // Specify the keypress assigned to a menu entry (converts to lowercase)
+    // Declare the lambda function callbacks or put a function pointer
     const SerialMenuEntry menu1[] = {
      {"X (Text in SRAM)", false, '1', [](){ Serial.println("choice X!"); } },
      {menu1String1,       false, 'y', [](){ menu.show(); } },
@@ -62,39 +75,40 @@ entries, some of them stored in Flash (PROGMEM), and some in SRAM.
     };
     constexpr uint8_t menu1Size = GET_MENU_SIZE(menu1);
     
-    //// Global variables updated by menu2
+    // Global variables updated by menu2
     uint16_t var1, var2;
     
-    //// Function called by menu2
+    // Function called by menu2
     void foo()
     {
        var1 = menu.getUint16_t();
        Serial.println("Running foo!");
     }
     
-    //// Definition of menu2:
-    //// Notice we can call foo() function pointer instead of a lambda
+    // Definition of menu2:
+    // Notice here we set function foo() as callback instead of a lambda function
     const SerialMenuEntry menu2[] = {
      {"Execute foo()", false, 'e', foo },
-     {"Set var2",      false, 'S', [](){ var2 = menu.getUint16_t(); } },
+     {"Set var2",      false, 'S', [](){ var2 = menu.getNumber<uint16_t>(); } },
      {"Rediplay menu", false, 'r', [](){ menu.show(); } },
      {"Back to menu1", false, 'B', [](){ menu.load(menu1, menu1Size);
                                          menu.show(); } }
     };
     constexpr uint8_t menu2Size = GET_MENU_SIZE(menu2);
     
-    //// Main arduino code
+    // Main arduino code
     void setup() {
-     //// Install menu1
+     // Install menu1
      menu.load(menu1, menu1Size);
-     //// Display current menu (menu1)
+     // Display current menu (menu1)
      menu.show();
     }
     
     void loop() {
-     //// Wait for menu user input. Pass-on the main loop delay so menu
-     //// library knows the elapsed time since it was last checked.
+     // Wait for menu user input. Pass-on the main loop delay so menu
+     // library knows the elapsed time since it was last checked.
      menu.run(100);
-     //// Add here your code to do stuff
+     // Add here your code to do stuff
      delay(100);
     }
+```
