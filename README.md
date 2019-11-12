@@ -53,7 +53,8 @@ Let's create two menus which call each other, with a varying number of menu
 entries, some of them stored in Flash (PROGMEM), and some in SRAM.
 
 ```C++
-
+    #include <SerialMenu.hpp>
+    
     // Forward declaration of menu2, because it is referenced before definition
     extern const SerialMenuEntry menu2[];
     extern const uint8_t menu2Size;
