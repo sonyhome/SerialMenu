@@ -64,14 +64,15 @@ entries, some of them stored in Flash (PROGMEM), and some in SRAM.
     const char menu1String2[] PROGMEM = "Z - second menu (Text in FLASH)";
     
     // Definition of menu1:
-    // Text is either embedded directly or a string name can be referenced
-    // Text in FLASH via PROGMEM is flagged as true, else use false
-    // Specify the keypress assigned to a menu entry (converts to lowercase)
-    // Declare the lambda function callbacks or put a function pointer
+    // A menu entry is defined with four fields.
+    // -Text can be embedded directly or you can reference a string name
+    // -Text in FLASH via PROGMEM is flagged as true, else flagged as false
+    // -Declare the keypress assigned to a menu entry (converts to lowercase)
+    // -Declare the callback as a lambda function or use a function pointer
     const SerialMenuEntry menu1[] = {
      {"X (Text in SRAM)", false, '1', [](){ Serial.println("choice X!"); } },
      {menu1String1,       false, 'y', [](){ menu.show(); } },
-     {menu1String2,       true,  'Z', [](){ menu.load(menu2, menu2Size);
+     {menu1String2,       true,  'z', [](){ menu.load(menu2, menu2Size);
                                             menu.show(); } }
     };
     constexpr uint8_t menu1Size = GET_MENU_SIZE(menu1);
@@ -87,29 +88,36 @@ entries, some of them stored in Flash (PROGMEM), and some in SRAM.
     }
     
     // Definition of menu2:
-    // Notice here we set function foo() as callback instead of a lambda function
+    // Notice that:
+    // -Embedded strings can't be declared PROGMEM so we declare "false"
+    // -Using 'B' vs 'b' doesn't matter (lowercase auto-conversion)
+    // -We call the function foo() instead of a lambda function
     const SerialMenuEntry menu2[] = {
      {"Execute foo()", false, 'e', foo },
      {"Set var2",      false, 'S', [](){ var2 = menu.getNumber<uint16_t>(); } },
-     {"Rediplay menu", false, 'r', [](){ menu.show(); } },
+     {"Redisplay menu",false, 'r', [](){ menu.show(); } },
      {"Back to menu1", false, 'B', [](){ menu.load(menu1, menu1Size);
                                          menu.show(); } }
     };
     constexpr uint8_t menu2Size = GET_MENU_SIZE(menu2);
     
-    // Main arduino code
+    // Main arduino code:
+    
     void setup() {
-     // Install menu1
+     // Install menu1 as the current menu to run
      menu.load(menu1, menu1Size);
      // Display current menu (menu1)
      menu.show();
     }
     
     void loop() {
+     // Run the menus:
      // Wait for menu user input. Pass-on the main loop delay so menu
      // library knows the elapsed time since it was last checked.
      menu.run(100);
+     
      // Add here your code to do stuff
+     
      delay(100);
     }
 ```
