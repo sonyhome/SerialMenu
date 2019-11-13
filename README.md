@@ -1,7 +1,7 @@
 # SerialMenu
 An Efficient Serial Console Menu Library for Arduino
 
-## Overview
+## Overview:
 This library allows you to define menus for the Arduino Serial console.
 
 The menus are very simple to build. You just declare them in an array.
@@ -34,7 +34,7 @@ consumed for the menus, even big ones, is minimal.
 * Tiny SRAM data memory consumption
 * Menu text can be stored in SRAM or Flash (data or program memory)
 
-## Memory overhead analysis:
+## Low memory overhead:
 
 To demonstrate the efficiency of this library, it was added to one of the existing examples shipped with the Arduino IDE, and we compared the memory footprint to figure out the actual overhead.
 
