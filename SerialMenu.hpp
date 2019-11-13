@@ -1,6 +1,11 @@
+#if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
+constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] = 
+#else
+constexpr char SERIAL_MENU_COPYRIGHT[] = 
+#endif
 ///////////////////////////////////////////////////////////////////////////////
-// Serial port Menus
-#define COPYRIGHT "SerialMenu - Copyright (c) 2019 Dan Truong"
+// SerialMenu - An Efficient Menu Library for Arduino Serial Console
+"SerialMenu - Copyright (c) 2019 Dan Truong";
 ///////////////////////////////////////////////////////////////////////////////
 //
 // This library allows you to easily create menus on the Arduino Serial console
@@ -99,10 +104,68 @@
 //  //// Add here your code to do stuff ////
 //  delay(100);
 // }
+//
+//////////////////
+// Design overview
+//////////////////
+// The code is pretty easy to follow. However here are some pointers.
+// A menu is defined as an array of SerialMenuEntry elements. Each entry
+// tracks a pointer to the callback to run when the menu is selected, a pointer
+// to the string to display (the pointer can be a PROGMEM pointer), and a key
+// which is the keypress that will trigger the selection of this menu entry.
+// The keys are converted to lowercase by OR-ing 0x20. Since the bit 0x20 is
+// not used, it is used as a flag to tell if the string is stored in FLASH via
+// PROGMEM, or if it is stored in SRAM like regular data.
+//
+// The SerialMenu class is a singleton class. Only one instance can exist.
+// To do so we provide the get() method, which if needed allocates that one
+// singleton instance. To prevent other instances to exist, the constructor is
+// kept private. Furthermore I declared all the class variables static.
+//
+// The usage pattern is to copy the pointer to the array. We must pass the size
+// too so a macro is provided for that. One those are in SerialMenu, the show()
+// command can scan the array to print the menu, and run() can scan the keys to
+// detect if an input is a valid menu entry, and if so it calls the callback
+// function defined in the array.
+// This implementation allows the use of lambda functions in the array. This
+// makes for menues that are very concise, where all the data and code for a
+// menu entry is declared in one source line. Other solutions will tend to have
+// a clutter to support menus and their actions.
+// I think I am being clever doing this! :)
+//
+/////////
+// Future
+/////////
+// Can I make the code more compact? Maybe circumvent using Serial's overhead?
+//
+// I don't foresee the need for much, except maybe support menus on other I/O
+// device with a print() or println() implementation. For example LCD screen
+// drivers. I would have to figure out how to do that (template?)
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <avr/pgmspace.h>
 #include <HardwareSerial.h>
+
+///////////////////////////////////////////////////////////////////////////////
+// If user doesn't specify disabling PROGMEM support, support is on by default.
+// To disable set SERIALMENU_DISABLE_PROGMEM_SUPPORT explicitly to true.
+// This is safe to do if none of the menu entries are stored in FLASH memory.
+///////////////////////////////////////////////////////////////////////////////
+//#define SERIALMENU_DISABLE_PROGMEM_SUPPORT true
+
+///////////////////////////////////////////////////////////////////////////////
+// The menu prints dots every 10s, and blinks the status LED after 10s to show
+// the program has not crashed and is still waiting for input.
+// To disable set SERIALMENU_DISABLE_HEARTBEAT_ON_IDLE explicitly to true.
+///////////////////////////////////////////////////////////////////////////////
+//#define SERIALMENU_DISABLE_HEARTBEAT_ON_IDLE true
+
+///////////////////////////////////////////////////////////////////////////////
+// The library prints some extra text like copyrights etc.
+// To disable set SERIALMENU_MINIMAL_FOOTPRINT explicitly to true.
+///////////////////////////////////////////////////////////////////////////////
+//#define SERIALMENU_MINIMAL_FOOTPRINT true
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Define a menu entry as:
@@ -128,7 +191,11 @@ class SerialMenuEntry {
     // Constructor used to init the array of menu entries
     SerialMenuEntry(const char * m, bool isprogMem, char k, void (*c)()) :
       message(m),
-      key(((isprogMem) ? (k|0x20) : (k&(~0x20)))),
+      //#if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
+        key(((isprogMem) ? (k|0x20) : (k&(~0x20)))),
+      //#else
+      //  key(k),
+      //#endif
       actionCallback(c)
     {}
   
@@ -173,8 +240,10 @@ class SerialMenuEntry {
 ///////////
 // loop()
 // {
-//    SerialMenu* menuPtr = SerialMenu::get();
+//    SerialMenu& menu = SerialMenu::get();
 // }
+// @todo Instead of a singleton we could avoid having any instance and
+// convert methods to static methods using static data. It saves a pointer...
 ///////////////////////////////////////////////////////////////////////////////
 class SerialMenu
 {
@@ -184,32 +253,43 @@ class SerialMenu
     // defined. If it is defined and the code breaks because the LED is not
     // on the board, try to comment the SHOW_HEARTBEAT_ON_IDLE define.
     #ifdef  LED_BUILTIN
-    #define SHOW_HEARTBEAT_ON_IDLE 1
+    #if SERIALMENU_DISABLE_HEARTBEAT_ON_IDLE != true
+    #define SERIALMENU_SHOW_HEARTBEAT_ON_IDLE true
+    #endif
     #endif
 
     // If PROGMEM is used, copy using this SRAM buffer size.
     #define PROGMEM_BUF_SIZE 8
 
     // This class implements a singleton desgin pattern with one static instance
-    static SerialMenu singleton;
+    static const SerialMenu * singleton;
 
     // Points to the array of menu entries for the current menu
-    const SerialMenuEntry * menu;
+    static const SerialMenuEntry * menu;
+    // Count how long we've been waiting for the user to input data
+    static uint16_t waiting;
     // number of entries in the current menu
-    uint8_t size;
+    static uint8_t size;
 
     // Private constructor for singleton design.
     // Initializes with an empty menu, prepares serial console and staus LED.
-    SerialMenu() :
-    menu(nullptr),
-    size(0)
+    SerialMenu()
     {
       Serial.begin(9600);
       while (!Serial){};
-      Serial.println(COPYRIGHT);
-      
+
+      #if SERIALMENU_MINIMAL_FOOTPRINT != true
+        #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
+          char buffer[sizeof(SERIAL_MENU_COPYRIGHT)];
+          strlcpy_P(buffer, SERIAL_MENU_COPYRIGHT, sizeof(SERIAL_MENU_COPYRIGHT));
+          Serial.println(buffer);
+        #else
+          Serial.println(SERIAL_MENU_COPYRIGHT);
+        #endif
+      #endif
+
       // Prepare to blink built-in LED.
-      #ifdef SHOW_HEARTBEAT_ON_IDLE
+      #ifdef SERIALMENU_SHOW_HEARTBEAT_ON_IDLE
       {
         pinMode(LED_BUILTIN, OUTPUT);
       }
@@ -218,16 +298,20 @@ class SerialMenu
 
   public:
     // Get a pointer to the one singleton instance of this class
-    static SerialMenu & get()
+    static const SerialMenu & get()
     {
-      return singleton;
+      if (singleton == nullptr)
+      {
+        singleton = new SerialMenu;
+      }
+      return *singleton;
     }
 
     // Get a pointer to the one singleton instance of this class and point it
     // to the current menu
-    static SerialMenu & get(const SerialMenuEntry* array, uint8_t arraySize)
+    static const SerialMenu & get(const SerialMenuEntry* array, uint8_t arraySize)
     {
-      SerialMenu & m = get();
+      const SerialMenu & m = get();
       m.load(array, arraySize);
       return m;
     }
@@ -242,9 +326,13 @@ class SerialMenu
     // Display the current menu on the Serial console
     void show() const
     {
+      #if SERIALMENU_MINIMAL_FOOTPRINT != true
       Serial.println("\nMenu:");
+      #endif
+
       for (uint8_t i = 0; i < size; ++i)
       {
+      #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
         if (menu[i].isProgMem())
         {
           // String in PROGMEM Flash, move it via a SRAM buffer to print it
@@ -256,12 +344,14 @@ class SerialMenu
           {
             len -= PROGMEM_BUF_SIZE - 1;
             progMemPt += PROGMEM_BUF_SIZE - 1;
+            // @todo replace strlcpy_P() and buffer with moving a uint32?
             len = strlcpy_P(buffer, progMemPt, PROGMEM_BUF_SIZE);
             Serial.print(buffer);
           }
           Serial.println("");
         }
         else
+      #endif
         {
           // String in data SRAM, print directly
           Serial.println(menu[i].getMenu());
@@ -304,7 +394,6 @@ class SerialMenu
       if (c == '-')
       {
         isNegative = true;
-        Serial.print("[negative] ");
         while (!Serial.available());
         c = Serial.read();
       }
@@ -323,7 +412,7 @@ class SerialMenu
         }
 
         while (!Serial.available());
-        c = Serial.read();        
+        c = Serial.read();
       }
       
       if (isNegative)
@@ -354,14 +443,11 @@ class SerialMenu
 
       // Code block to display a heartbeat as a dot on the Serial console and
       // also by blinking the status LED on the board.
-      #ifdef SHOW_HEARTBEAT_ON_IDLE
+      #if SERIALMENU_SHOW_HEARTBEAT_ON_IDLE == true
       {
         const uint16_t callsPerSecond = 1000 / loopDelayMs;
         const uint16_t loopsPerTick = 10 * callsPerSecond;
         const uint16_t loopsPerBlink = callsPerSecond; // blink every second
-
-        // Count how long we've been waiting for the user to input data
-        static uint16_t waiting = 0;
 
         // Waiting for input
         if (!userInputAvailable)
@@ -425,6 +511,3 @@ class SerialMenu
     }
 
 };
-
-// A single variable for the menus
-extern SerialMenu& menu;

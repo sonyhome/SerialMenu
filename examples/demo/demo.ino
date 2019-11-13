@@ -17,6 +17,7 @@
 #define DEMOCOPYRIGHT "SerialMenu demo - Copyright (c) 2019 Dan Truong"
 
 #include <SerialMenu.hpp>
+const SerialMenu& menu = SerialMenu::get();
 
 ///////////////////////////////////////////////////////////////////////////////
 // Main menu
