@@ -30,7 +30,7 @@ very little memory.
 To analyze the efficiency of this library, it was added to one of the existing examples shipped with the Arduino IDE, and we compared the memory footprint overhead.
 
 This analysis is for the following configuration:
-* Example program: 07.Display -> barGraph example.
+* Example program: **07.Display -> barGraph**
 * Platform: Arduino UNO
 * SerialMenu version 1.0 released Nov. 12 2019.
 
