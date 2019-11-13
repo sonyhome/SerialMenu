@@ -27,9 +27,179 @@ very little memory.
 
 ## Memory overhead analysis:
 
-This analysis is for version 1.0 released Nov. 12 2019.
+To analyze the efficiency of this library, it was added to one of the existing examples shipped with the Arduino IDE, and we compared the memory footprint overhead.
 
+This analysis is for the following configuration:
+* Example program: 07.Display -> barGraph example.
+* Platform: Arduino UNO
+* SerialMenu version 1.0 released Nov. 12 2019.
 
+Overhead Results:
+
+* Each menu entry only costs **5 Bytes of SRAM** data memory, when the string is stored in FLASH memory.
+* A fixed **43 Bytes of SRAM** base cost for the library (of which 12B for the singleton).
+* A fixed **1150 Bytes of FLASH** base cost for the library's code.
+
+### Original code:
+```
+Sketch uses 1086 bytes (3%) of program storage space. Maximum is 32256 bytes.
+Global variables use 29 bytes (1%) of dynamic memory, leaving 2019 bytes for local variables. Maximum is 2048 bytes.
+```
+### Original code using Serial:
+```C++
+void setup() {
+  Serial.begin(9600);
+  while (!Serial){};
+  Serial.print("hello ");
+  Serial.println("world");
+  ...}
+```
+```
+Sketch uses 2120 bytes (6%) of program storage space. Maximum is 32256 bytes.
+Global variables use 220 bytes (10%) of dynamic memory, leaving 1828 bytes for local variables. Maximum is 2048 bytes.
+```
+Note:
+We'll leave this extra code in setup(), so as to not bias the cost of using the SerialMenu library. It will be our reference.
+The intent is to write to the Serial console so this overhead (1034B code, 191B data) is unavoidable unless we rewrite the default HardwareSerial library. The console output is:
+```
+hello world
+```
+
+### Adding SerialMenu code:
+```C++
+#include <SerialMenu.hpp>
+SerialMenu& menu = SerialMenu::get();
+```
+```
+Sketch uses 2934 bytes (9%) of program storage space. Maximum is 32256 bytes.
+Global variables use 232 bytes (11%) of dynamic memory, leaving 1816 bytes for local variables. Maximum is 2048 bytes.
+```
+**Overhead: 814B code, 12B data**
+If there's no reference to SerialMenu there's no overhead to include the library. If there is, as above, the overhead is the creation of the SerialMenu singleton instance. It's a one time hit.
+As coded above, this will just print the library's copyright stored in FLASH memory:
+```
+SerialMenu - Copyright (c) 2019 Dan Truong
+hello world
+```
+
+It is possible to disable printing unecessary text like the copyright with a macro to reduce memory consumption:
+```C++
+#define SERIALMENU_MINIMAL_FOOTPRINT true
+#include <SerialMenu.hpp>
+SerialMenu& menu = SerialMenu::get();
+```
+```
+Sketch uses 2782 bytes (8%) of program storage space. Maximum is 32256 bytes.
+Global variables use 232 bytes (11%) of dynamic memory, leaving 1816 bytes for local variables. Maximum is 2048 bytes.
+```
+**Overhead: 662B code, 12B data**
+This result is reasonable: The singleton is made up of 2 pointers, a short and a byte (11B total).
+Let's add the function calls needed to run the menus. We now are just displaying an empty menu.
+```C++
+#define SERIALMENU_MINIMAL_FOOTPRINT true
+#include <SerialMenu.hpp>
+SerialMenu& menu = SerialMenu::get();
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial){};
+  Serial.print("hello ");
+  Serial.println("world");
+...
+  menu.load(nullptr, 0);
+  menu.show();
+}
+
+void loop() {
+  menu.run(1);
+...}
+```
+```
+Sketch uses 3270 bytes (10%) of program storage space. Maximum is 32256 bytes.
+Global variables use 263 bytes (12%) of dynamic memory, leaving 1785 bytes for local variables. Maximum is 2048 bytes.
+```
+**Overhead: 1150B code, 43B data**
+The 3 routines added extra code and another 32B of space used. I don't know where that went.
+
+### Adding a menu with 2 entries:
+Since the goal is to use the least SRAM data memory, we'll declare a small menu with two entries where the text is stored in FLASH memory via the PROGMEM keyword. Here's the full modified program:
+```C++
+/*
+  LED bar graph
+...
+  created 4 Sep 2010
+  by Tom Igoe
+...
+  http://www.arduino.cc/en/Tutorial/BarGraph
+*/
+#define SERIALMENU_MINIMAL_FOOTPRINT true
+#include <SerialMenu.hpp>
+
+// these constants won't change:
+const int analogPin = A0;
+const int ledCount = 10;
+
+int ledPins[] = {
+  2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+};   // an array of pin numbers to which LEDs are attached
+
+SerialMenu& menu = SerialMenu::get();
+
+const char PROGMEM menu1[] = "A: display one";
+const char PROGMEM menu2[] = "B: redisplay the menu";
+
+const SerialMenuEntry mainMenu[] = {
+  {menu1,  true, 'A', [](){ Serial.println("1"); } },
+  {menu2, true, 'B', [](){ menu.show(); } }
+};
+constexpr uint8_t mainMenuSize = GET_MENU_SIZE(mainMenu);
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial){};
+  Serial.print("hello ");
+  Serial.println("world");
+
+  for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+    pinMode(ledPins[thisLed], OUTPUT);
+  }
+
+  menu.load(mainMenu, mainMenuSize);
+  menu.show();
+}
+
+void loop() {
+  menu.run(1);
+
+  int sensorReading = analogRead(analogPin);
+  int ledLevel = map(sensorReading, 0, 1023, 0, ledCount);
+
+  for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+    if (thisLed < ledLevel) {
+      digitalWrite(ledPins[thisLed], HIGH);
+    }
+    else {
+      digitalWrite(ledPins[thisLed], LOW);
+    }
+  }
+}
+```
+```
+Sketch uses 3424 bytes (10%) of program storage space. Maximum is 32256 bytes.
+Global variables use 275 bytes (13%) of dynamic memory, leaving 1773 bytes for local variables. Maximum is 2048 bytes.
+```
+**Overhead: 1304B code, 55B data**
+We added two menu entries, each holding a function pointer (not in SRAM), a data pointer and a byte (5B).
+The menu is functional, and the output is as follows, when entering A then B:
+```
+hello world
+A: display one
+B: redisplay the menu
+1
+A: display one
+B: redisplay the menu
+...
+```
 
 ## Notes:
 
@@ -132,4 +302,30 @@ entries, some of them stored in Flash (PROGMEM), and some in SRAM.
      
      delay(100);
     }
+```
+
+# Optimization Macros
+The library by default will maximize functionality and verbosity. It is possible to define macros *before* the library's inclusion, to disable some features and henceforce reduce the memory footprint.
+
+```C++
+///////////////////////////////////////////////////////////////////////////////
+// If user doesn't specify disabling PROGMEM support, support is on by default.
+// To disable set SERIALMENU_DISABLE_PROGMEM_SUPPORT explicitly to true.
+// This is safe to do if none of the menu entries are stored in FLASH memory.
+///////////////////////////////////////////////////////////////////////////////
+#define SERIALMENU_DISABLE_PROGMEM_SUPPORT true
+
+///////////////////////////////////////////////////////////////////////////////
+// The menu prints dots every 10s, and blinks the status LED after 10s to show
+// the program has not crashed and is still waiting for input.
+// To disable set SERIALMENU_DISABLE_HEARTBEAT_ON_IDLE explicitly to true.
+///////////////////////////////////////////////////////////////////////////////
+#define SERIALMENU_DISABLE_HEARTBEAT_ON_IDLE true
+
+///////////////////////////////////////////////////////////////////////////////
+// The library prints some extra text like copyrights etc.
+// To disable set SERIALMENU_MINIMAL_FOOTPRINT explicitly to true.
+///////////////////////////////////////////////////////////////////////////////
+#define SERIALMENU_MINIMAL_FOOTPRINT true
+#include <SerialMenu.hpp>
 ```
