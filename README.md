@@ -237,13 +237,51 @@ Tools -> Serial Monitor
 
 You should see the demo menu, and interact with it.
 
-## Usage example:
+## Usage example 1:
+Let's create a simple menu which controls global values and calls a function.
+
+```C++
+    #include <SerialMenu.hpp>
+    const SerialMenu& menu = SerialMenu::get();
+
+    float f = 0;
+    uint16_t x = 0;
+    uint16_t y = 0;
+    
+    void doMath(uint16_t a, float b)
+    {
+      Serial.println(random(x) * f + y);
+    }
+
+    // Declare the menu and its callback functions
+    const SerialMenuEntry mainMenu[] = {
+     {"update X",  false, 'x', [](){ x = menu.getNumber<uint_16_t>("Input x:") } },
+     {"update F",  false, 'f', [](){ f = menu.getNumber<float>("Input f:") } },
+     {"show Y",    false, 'y', [](){ Serial.println(y); } },
+     {"do math =",  false, '=', [](){ doMath(x, f) } },
+     {"show menu", false,  'z', [](){ menu.show(); } }
+    };
+    constexpr uint8_t mainMenuSize = GET_MENU_SIZE(mainMenu);
+
+    void setup() {
+     menu.load(mainMenu, mainMenuSize);
+     menu.show();
+    }
+    
+    void loop() {
+     menu.run(100);
+     y++;
+     delay(100);
+    }
+```
+## Usage example 2:
 
 Let's create two menus which call each other, with a varying number of menu
 entries, some of them stored in Flash (PROGMEM), and some in SRAM.
 
 ```C++
     #include <SerialMenu.hpp>
+    const SerialMenu& menu = SerialMenu::get();
     
     // Forward declaration of menu2, because it is referenced before definition
     extern const SerialMenuEntry menu2[];
