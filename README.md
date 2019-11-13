@@ -34,11 +34,10 @@ This analysis is for the following configuration:
 * Platform: Arduino UNO
 * SerialMenu version 1.0 released Nov. 12 2019.
 
-Overhead Results:
-
-* Each menu entry only costs **5 Bytes of SRAM** data memory, when the string is stored in FLASH memory.
-* A fixed **43 Bytes of SRAM** base cost for the library (of which 12B for the singleton).
-* A fixed **1150 Bytes of FLASH** base cost for the library's code.
+**Overhead Results:**
+* Low **5 Bytes of SRAM** data memory overhead per menu line entry with strings stored in FLASH memory.
+* Fixed **43 Bytes of SRAM** base cost for the library (of which 12B for the singleton).
+* Fixed **1150 Bytes of FLASH** base cost for the library's code.
 
 ### Original code:
 ```
