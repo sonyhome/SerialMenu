@@ -1,21 +1,29 @@
 # SerialMenu
-Serial Console Menu Library for Arduino
+An Efficient Serial Console Menu Library for Arduino
 
 ## Overview
 This library allows you to define menus for the Arduino Serial console.
-Menus are very simple to build, by just declaring them in an array.
-A single show() function call displays them, and a single call to the
-run() function from loop() is enough to automatically monitor the menu
-and execute the callback functions associated to the menu entries.
 
-The menus are non-blocking, but only trigger when there is user input.
+The menus are very simple to build. You just declare them in an array.
+
+The menus are simple to run.
+A single call to a show() method displays them.
+A single call to the
+run() function inside loop() is all it takes to automatically monitor
+the user's menu inputs and execute the appropriate callback function
+associated to the menu entry selected.
+
+Multiple menus can be defined, and can be nested and called easily,
+just by calling the load() method.
+
+The menus are non-blocking. Code only trigger when there is user input.
 This means run() returns immediately if there's no activity, or just
-after calling the callback routine if there was input. This allows
+after calling the callback routine if there was user input. This allows
 programs to simultaneously go about the work you want them to do while
-responding to serial commands promptly but with almost no overhead.
+responding to serial commands promptly, but with almost no overhead.
 
-Furthermore because of how the menu library is implemented, they consume
-very little memory.
+Furthermore because of how the menu library is implemented, the memory
+consumed for the menus, even big ones, is minimal.
 
 ## Benefits:
 
@@ -23,11 +31,12 @@ very little memory.
 * One call to display the menu
 * Easily support sub-menu hierarchies
 * Compact user code
+* Tiny SRAM data memory consumption
 * Menu text can be stored in SRAM or Flash (data or program memory)
 
 ## Memory overhead analysis:
 
-To analyze the efficiency of this library, it was added to one of the existing examples shipped with the Arduino IDE, and we compared the memory footprint overhead.
+To demonstrate the efficiency of this library, it was added to one of the existing examples shipped with the Arduino IDE, and we compared the memory footprint to figure out the actual overhead.
 
 This analysis is for the following configuration:
 * Example program: **07.Display -> barGraph**
@@ -59,7 +68,8 @@ Global variables use 220 bytes (10%) of dynamic memory, leaving 1828 bytes for l
 ```
 Note:
 We'll leave this extra code in setup(), so as to not bias the cost of using the SerialMenu library. It will be our reference.
-The intent is to write to the Serial console so this overhead (1034B code, 191B data) is unavoidable unless we rewrite the default HardwareSerial library. The console output is:
+The intent is to write to the Serial console so this overhead (1034B code, 191B data) is unavoidable unless we rewrite the default HardwareSerial library. We assume the reference program consumes **2120 bytes of FLASH** and **220 bytes of SRAM** before adding any menus in it.
+The reference program's console output is:
 ```
 hello world
 ```
