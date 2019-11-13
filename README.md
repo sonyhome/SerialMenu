@@ -74,14 +74,13 @@ Sketch uses 2934 bytes (9%) of program storage space. Maximum is 32256 bytes.
 Global variables use 232 bytes (11%) of dynamic memory, leaving 1816 bytes for local variables. Maximum is 2048 bytes.
 ```
 **Overhead: 814B code, 12B data**
-If there's no reference to SerialMenu there's no overhead to include the library. If there is, as above, the overhead is the creation of the SerialMenu singleton instance. It's a one time hit.
-As coded above, this will just print the library's copyright stored in FLASH memory:
+If there's no reference to SerialMenu there's no overhead to include the library. If there is, as above, the overhead is from the creation of the SerialMenu singleton instance. It is a one time hit.
+As coded above, this just prints the library's copyright which is stored in FLASH memory:
 ```
 SerialMenu - Copyright (c) 2019 Dan Truong
 hello world
 ```
-
-It is possible to disable printing unecessary text like the copyright with a macro to reduce memory consumption:
+It is possible to disable printing unecessary text like the copyright with a macro, which further reduces memory consumption. We'll use this mode to report our results:
 ```C++
 #define SERIALMENU_MINIMAL_FOOTPRINT true
 #include <SerialMenu.hpp>
@@ -92,8 +91,8 @@ Sketch uses 2782 bytes (8%) of program storage space. Maximum is 32256 bytes.
 Global variables use 232 bytes (11%) of dynamic memory, leaving 1816 bytes for local variables. Maximum is 2048 bytes.
 ```
 **Overhead: 662B code, 12B data**
-This result is reasonable: The singleton is made up of 2 pointers, a short and a byte (11B total).
-Let's add the function calls needed to run the menus. We now are just displaying an empty menu.
+This result seems reasonable. The singleton holds 2 pointers, a short and a byte (11B total).
+Now let's add the function calls needed to run the menus. The code does nothing since we still have an empty menu.
 ```C++
 #define SERIALMENU_MINIMAL_FOOTPRINT true
 #include <SerialMenu.hpp>
@@ -118,10 +117,10 @@ Sketch uses 3270 bytes (10%) of program storage space. Maximum is 32256 bytes.
 Global variables use 263 bytes (12%) of dynamic memory, leaving 1785 bytes for local variables. Maximum is 2048 bytes.
 ```
 **Overhead: 1150B code, 43B data**
-The 3 routines added extra code and another 32B of space used. I don't know where that went.
+The 3 routines used linked extra code and claimed 32B of SRAM. I don't know where that went.
 
 ### Adding a menu with 2 entries:
-Since the goal is to use the least SRAM data memory, we'll declare a small menu with two entries where the text is stored in FLASH memory via the PROGMEM keyword. Here's the full modified program:
+Since the goal is to use the least SRAM data memory, we'll declare a small menu with two entries, storing the text in FLASH memory via the PROGMEM keyword. Here's the full modified program:
 ```C++
 /*
   LED bar graph
@@ -188,8 +187,8 @@ Sketch uses 3424 bytes (10%) of program storage space. Maximum is 32256 bytes.
 Global variables use 275 bytes (13%) of dynamic memory, leaving 1773 bytes for local variables. Maximum is 2048 bytes.
 ```
 **Overhead: 1304B code, 55B data**
-We added two menu entries, each holding a function pointer (not in SRAM), a data pointer and a byte (5B).
-The menu is functional, and the output is as follows, when entering A then B:
+The results are still coherent. We added two menu entries, each holding a function pointer (not in SRAM), a data pointer and a byte (5B).
+The menu is now functional, and the output is as follows, when typing A[enter] then B[enter]:
 ```
 hello world
 A: display one
