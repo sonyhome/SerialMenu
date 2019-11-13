@@ -222,8 +222,8 @@ functions directly in the data structure with the menu data. Lambda notation
 is best for simple tasks like setting a global variable or calling another
 menu, as it keeps the code for a menu entry concise and within the menu
 entry definition. See the example.
-A lambda function syntax is written "[](){}" where the code goes inside {}.
-The other elements "[]()" are not used here.
+A lambda function syntax is written ```"[](){}"``` where the code goes inside ```{}```.
+The other elements ```"[]()"``` are not used here.
 
 ## Installation:
 
