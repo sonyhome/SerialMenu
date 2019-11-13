@@ -1,6 +1,8 @@
 # SerialMenu
 An Efficient Serial Console Menu Library for Arduino
 
+See also https://forum.arduino.cc/index.php?topic=645999.0
+
 ## Overview:
 This library allows you to define menus for the Arduino Serial console.
 
