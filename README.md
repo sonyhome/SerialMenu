@@ -1,7 +1,11 @@
 # SerialMenu
 An Efficient Serial Console Menu Library for Arduino
 
-See also https://forum.arduino.cc/index.php?topic=645999.0
+## See also
+Anouncement post on the Arduino forum
+ https://forum.arduino.cc/index.php?topic=645999.0
+Blog entry and discussion
+ https://wordpress.com/post/dntruong.wordpress.com/1029
 
 ## Overview:
 This library allows you to define menus for the Arduino Serial console.
@@ -240,41 +244,43 @@ Tools -> Serial Monitor
 You should see the demo menu, and interact with it.
 
 ## Usage example 1:
-Let's create a simple menu which controls global values and calls a function.
+Let's create a simple menu which controls global values and calls a function to do some math.
 
 ```C++
-    #include <SerialMenu.hpp>
-    const SerialMenu& menu = SerialMenu::get();
+#include <SerialMenu.hpp>
+const SerialMenu& menu = SerialMenu::get();
 
-    float f = 0;
-    uint16_t x = 0;
-    uint16_t y = 0;
-    
-    void doMath(uint16_t a, float b)
-    {
-      Serial.println(random(x) * f + y);
-    }
+float f = 0;
+uint16_t x = 0;
+uint16_t y = 0;
 
-    // Declare the menu and its callback functions
-    const SerialMenuEntry mainMenu[] = {
-     {"update X",  false, 'x', [](){ x = menu.getNumber<uint_16_t>("Input x:") } },
-     {"update F",  false, 'f', [](){ f = menu.getNumber<float>("Input f:") } },
-     {"show Y",    false, 'y', [](){ Serial.println(y); } },
-     {"do math =",  false, '=', [](){ doMath(x, f) } },
-     {"show menu", false,  'z', [](){ menu.show(); } }
-    };
-    constexpr uint8_t mainMenuSize = GET_MENU_SIZE(mainMenu);
+void doMath(uint16_t a, float b)
+{
+  Serial.println(random(x) * f + y);
+}
 
-    void setup() {
-     menu.load(mainMenu, mainMenuSize);
-     menu.show();
-    }
-    
-    void loop() {
-     menu.run(100);
-     y++;
-     delay(100);
-    }
+// Declare the menu and its callback functions
+const SerialMenuEntry mainMenu[] = {
+ {"update X",  false, 'x',
+  [](){ x = menu.getNumber<uint16_t>("Input x:"); } },
+ {"update F",  false, 'f',
+  [](){ f = menu.getNumber<float>("Input f:"); } },
+ {"show Y",    false, 'y', [](){ Serial.println(y); } },
+ {"do math =",  false, '=', [](){ doMath(x, f); } },
+ {"show menu", false,  'z', [](){ menu.show(); } }
+};
+constexpr uint8_t mainMenuSize = GET_MENU_SIZE(mainMenu);
+
+void setup() {
+ menu.load(mainMenu, mainMenuSize);
+ menu.show();
+}
+
+void loop() {
+ menu.run(100);
+ y++;
+ delay(100);
+}
 ```
 ## Usage example 2:
 
