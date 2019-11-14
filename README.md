@@ -250,6 +250,10 @@ You should see the demo menu, and interact with it.
 ## Usage example 1:
 Let's create a simple menu which controls global values and calls a function to do some math.
 
+https://youtu.be/bWsiip9bdvQ
+
+[![Watch the video](https://forum.arduino.cc/index.php?action=dlattach;topic=645999.0;attach=332991)](https://youtu.be/bWsiip9bdvQ)
+
 ```C++
 #include <SerialMenu.hpp>
 const SerialMenu& menu = SerialMenu::get();
