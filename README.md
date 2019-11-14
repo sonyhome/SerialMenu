@@ -14,9 +14,7 @@ https://wordpress.com/post/dntruong.wordpress.com/1029
 ## Overview:
 This library allows you to define menus for the Arduino Serial console.
 
-![Image](https://forum.arduino.cc/index.php?action=dlattach;topic=645999.0;attach=332991)
-
- <img src="https://forum.arduino.cc/index.php?action=dlattach;topic=645999.0;attach=332991" width="350" title="Image">
+ <img src="http://forum.arduino.cc/index.php?action=dlattach;topic=645999.0;attach=332991;image=demo1.png" width="350" title="Image">
 
 The menus are very simple to build. You just declare them in an array.
 
