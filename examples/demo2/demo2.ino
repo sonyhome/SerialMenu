@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Serial port Menus Demo
+// Serial port Menus Demo2
 //
 // Usage:
 // - Compile and load this sketch onto your Arduino board.
@@ -13,8 +13,13 @@
 // If there is no clearly legible text shown in the window, set the speed to
 // 9600 baud, and set the autoscroll checkbox. Reset the board or reload the
 // program.
+//
+// The goal of this demo is to create 2 menus that call each other. Try to
+// bounce around the two menus using the '<' and '>' keys.
+// Other teachings include using PROGMEM to store the menu text in FLASH to
+// save SRAM memory, and demonstrate menu keys are case insensitive.
 ///////////////////////////////////////////////////////////////////////////////
-#define DEMOCOPYRIGHT "SerialMenu demo - Copyright (c) 2019 Dan Truong"
+#define DEMOCOPYRIGHT "SerialMenu demo2 - Copyright (c) 2019 Dan Truong"
 
 #include <SerialMenu.hpp>
 const SerialMenu& menu = SerialMenu::get();

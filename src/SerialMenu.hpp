@@ -259,10 +259,10 @@ class SerialMenu
     #endif
 
     // If PROGMEM is used, copy using this SRAM buffer size.
-    #define PROGMEM_BUF_SIZE 8
+    static constexpr uint8_t PROGMEM_BUF_SIZE = 8;
 
     // This class implements a singleton desgin pattern with one static instance
-    static const SerialMenu * singleton;
+    static SerialMenu * singleton;
 
     // Points to the array of menu entries for the current menu
     static const SerialMenuEntry * menu;
@@ -298,7 +298,7 @@ class SerialMenu
 
   public:
     // Get a pointer to the one singleton instance of this class
-    static const SerialMenu & get()
+    static SerialMenu & get()
     {
       if (singleton == nullptr)
       {
@@ -311,9 +311,9 @@ class SerialMenu
     // to the current menu
     static const SerialMenu & get(const SerialMenuEntry* array, uint8_t arraySize)
     {
-      const SerialMenu & m = get();
-      m.load(array, arraySize);
-      return m;
+      (void) SerialMenu::get();
+      singleton->load(array, arraySize);
+      return *singleton;
     }
     
     // Install the current menu to display
@@ -337,7 +337,7 @@ class SerialMenu
         {
           // String in PROGMEM Flash, move it via a SRAM buffer to print it
           char buffer[PROGMEM_BUF_SIZE];
-          char * progMemPt = menu[i].getMenu();
+          const char * progMemPt = menu[i].getMenu();
           uint8_t len = strlcpy_P(buffer, progMemPt, PROGMEM_BUF_SIZE);
           Serial.print(buffer);
           while (len >= PROGMEM_BUF_SIZE)
